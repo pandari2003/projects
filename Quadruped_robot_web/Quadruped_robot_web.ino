@@ -5,8 +5,8 @@ Aurdino R4 wifi board
 #include <WiFiS3.h>
 #include <Servo.h>
 
-const char* wifiSSID = "Telezer_J";
-const char* wifiPASS = "Telezer12";
+const char* wifiSSID = "your wifi SSID";
+const char* wifiPASS = "wifi password";
 
 WiFiServer server(80);
 Servo servoB1;
