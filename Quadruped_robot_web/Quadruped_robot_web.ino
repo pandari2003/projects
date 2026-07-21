@@ -1,12 +1,8 @@
-/*
-Aurdino R4 wifi board 
-*/
-
 #include <WiFiS3.h>
 #include <Servo.h>
 
-const char* wifiSSID = "your wifi SSID";
-const char* wifiPASS = "wifi password";
+const char* wifiSSID = "Telezer_J";
+const char* wifiPASS = "Telezer12";
 
 WiFiServer server(80);
 Servo servoB1;
@@ -18,292 +14,333 @@ Servo servoH1;
 Servo servoH2;
 Servo servoH3;
 Servo servoH4;
-             
+
 Servo servoKN1;
 Servo servoKN2;
 Servo servoKN3;
 Servo servoKN4;
 
-const int servoB1pin = 2; //front right (servo 1)
-const int servoB2pin = 3; //back right (servo 2)
-const int servoB3pin = 4; //front left (servo 4)
-const int servoB4pin = 5; //back left (servo 3)
+const int servoB1pin = 2;  //front right (servo 1)
+const int servoB2pin = 3;  //back right (servo 2)
+const int servoB3pin = 4;  //front left (servo 4)
+const int servoB4pin = 5;  //back left (servo 3)
 
-const int servoH1Pin = 6; // back right (servo 8)
-const int servoH2Pin = 7; // Front Right (servo 5)
-const int servoH3Pin = 8; // back Left(servo 7)
-const int servoH4Pin = 9; // front left (servo 6)
+const int servoH1Pin = 6;  // back right (servo 8)
+const int servoH2Pin = 7;  // Front Right (servo 5)
+const int servoH3Pin = 8;  // back Left(servo 7)
+const int servoH4Pin = 9;  // front left (servo 6)
 
-const int servoKN1Pin = 10; // back right (servo 12)
-const int servoKN2Pin = 11; // Front Right (servo 9)
-const int servoKN3Pin = 12; // back Left (servo 11)
-const int servoKN4Pin = 13; // front left (servo 10)
+const int servoKN1Pin = 10;  // back right (servo 12)
+const int servoKN2Pin = 11;  // Front Right (servo 9)
+const int servoKN3Pin = 12;  // back Left (servo 11)
+const int servoKN4Pin = 13;  // front left (servo 10)
 
-/**********************sit robot******************/
-void Sit()
-{
-    for (int i = 90; i >= 0; i--)
-    {
-        // Left pair
-        servoH2.write(i);
-        servoH3.write(i);
-        servoKN2.write(i);
-        servoKN3.write(i);
+/**************** SET ALL SERVOS TO 90° ****************/
+void Set() {
 
-        // Right pair
-        servoH1.write(180 - i);
-        servoH4.write(180 - i);
-        servoKN1.write(180 - i);
-        servoKN4.write(180 - i);
+  // Body servos
+  servoB1.write(90);
+  servoB2.write(90);
+  servoB3.write(90);
+  servoB4.write(90);
 
-        delay(50);      // Same speed as Stand
-    }
+  // Hip servos
+  servoH1.write(90);
+  servoH2.write(90);
+  servoH3.write(90);
+  servoH4.write(90);
 
-    delay(50);
+  // Knee servos
+  servoKN1.write(90);
+  servoKN2.write(90);
+  servoKN3.write(90);
+  servoKN4.write(90);
+
+  delay(500);
 }
 
-/******************stand robot********************/
-void Stand()
-{
-    for (int i = 0; i <= 90; i++)
-    {
-        // Left pair
-        servoH2.write(i);
-        servoH3.write(i);
-        servoKN2.write(i);
-        servoKN3.write(i);
+/****************sit*****************/
+void Sit() {
+  for (int i = 90; i >= 0; i--) {
+    // Left pair
+    servoH2.write(i);
+    servoH3.write(i);
+    servoKN2.write(i - 45);
+    servoKN3.write(i - 45);
 
-        // Right pair
-        servoH1.write(180 - i);
-        servoH4.write(180 - i);
-        servoKN1.write(180 - i);
-        servoKN4.write(180 - i);
+    // Right pair
+    servoH1.write(180 - i);
+    servoH4.write(180 - i);
+    servoKN1.write(230 - i);
+    servoKN4.write(230 - i);
 
-        delay(50);      // Adjust speed here
-    }
+    delay(80);  // Same speed as Stand
+  }
 
-    delay(50);
+  delay(60);
 }
 
-/****************FORWARD****************/
-void walkForward()
-{
+/******************stand robot********************/  //stand
+void Stand() {
+  for (int i = 0; i <= 90; i++) {
+    // Left pair
+    servoH2.write(i);
+    servoH3.write(i);
+    servoKN2.write(i - 45);
+    servoKN3.write(i - 45);
+
+    // Right pair
+    servoH1.write(180 - i);
+    servoH4.write(180 - i);
+    servoKN1.write(230 - i);
+    servoKN4.write(230 - i);
+
+    delay(50);  // Adjust speed here
+  }
+
+  delay(50);
+}
+/**************** walk Forward ******************/
+void walkForward() {
   // Repeat walking cycle
-  for (int step = 0; step < 20; step++)
-  {
+  for (int step = 0; step < 10; step++) {
     //---------------- STEP 1 ----------------//
-    for (int i = 90; i >= 70; i--)
-    {
+    for (int i = 90; i >= 70; i--) {
       servoH1.write(i);
       servoH3.write(i);
-
       servoH2.write(180 - i);
       servoH4.write(180 - i);
 
-      delay(30);
+      delay(50);
     }
 
     // Lift Legs 1 & 4
-    for (int k = 90; k >= 70; k--)
-    {
+    for (int k = 90; k >= 70; k--) {
       servoKN1.write(k);
       servoKN3.write(k);
-      delay(30);
+      delay(50);
     }
 
     // Lower Legs 1 & 4
-    for (int k = 70; k <= 90; k++)
-    {
+    for (int k = 70; k <= 90; k++) {
       servoKN1.write(k);
       servoKN3.write(k);
-      delay(30);
+      delay(50);
     }
 
     //---------------- STEP 2 ----------------//
-    for (int i = 70; i <= 110; i++)
-    {
+    for (int i = 70; i <= 110; i++) {
       servoH1.write(i);
       servoH3.write(i);
-
       servoH2.write(180 - i);
       servoH4.write(180 - i);
 
-      delay(30);
+      delay(50);
     }
 
     // Lift Legs 2 & 3
-    for (int k = 90; k >= 70; k--)
-    {
+    for (int k = 90; k >= 70; k--) {
       servoKN2.write(k);
       servoKN4.write(k);
-      delay(30);
+      delay(50);
     }
 
     // Lower Legs 2 & 3
-    for (int k = 70; k <= 90; k++)
-    {
+    for (int k = 70; k <= 90; k++) {
       servoKN2.write(k);
       servoKN4.write(k);
-      delay(30);
+      delay(50);
     }
 
     //---------------- Return Center ----------------//
-    for (int i = 110; i >= 90; i--)
-    {
+    for (int i = 110; i >= 90; i--) {
       servoH1.write(i);
       servoH3.write(i);
 
       servoH2.write(180 - i);
       servoH4.write(180 - i);
 
-      delay(30);
+      delay(50);
     }
   }
-
+  delay(30);
 }
+/**************** BACKWARD ****************/
+void walkBackward() {
 
-/****************BACKWARD****************/
-void walkBackward()
-{
-  // Repeat walking cycle
-  for (int step = 0; step < 20; step++)
-  {
-    //---------------- STEP 1 ----------------//
-    for (int i = 90; i <= 110; i++)
-    {
+  for (int step = 0; step < 10; step++) {
+
+    //---------------- STEP 1 : Shift Hips ----------------//
+    for (int i = 90; i <= 110; i++) {
       servoH1.write(i);
       servoH3.write(i);
 
       servoH2.write(180 - i);
       servoH4.write(180 - i);
 
-      delay(30);
+      delay(50);
     }
 
-    // Lift Legs 1 & 4
-    for (int k = 90; k >= 70; k--)
-    {
+    //---------------- Lift Legs 1 & 3 ----------------//
+    for (int k = 90; k <= 110; k++) {
       servoKN1.write(k);
       servoKN3.write(k);
-      delay(30);
+      delay(50);
     }
 
-    // Lower Legs 1 & 4
-    for (int k = 70; k <= 90; k++)
-    {
+    //---------------- Lower Legs 1 & 3 ----------------//
+    for (int k = 110; k >= 90; k--) {
       servoKN1.write(k);
       servoKN3.write(k);
-      delay(30);
+      delay(50);
     }
 
-    //---------------- STEP 2 ----------------//
-    for (int i = 110; i >= 70; i--)
-    {
+    //---------------- STEP 2 : Shift Hips ----------------//
+    for (int i = 110; i >= 70; i--) {
       servoH1.write(i);
       servoH3.write(i);
 
       servoH2.write(180 - i);
       servoH4.write(180 - i);
 
-      delay(30);
+      delay(50);
     }
 
-    // Lift Legs 2 & 3
-    for (int k = 90; k >= 70; k--)
-    {
+    //---------------- Lift Legs 2 & 4 ----------------//
+    for (int k = 90; k <= 110; k++) {
       servoKN2.write(k);
       servoKN4.write(k);
-      delay(30);
+      delay(50);
     }
 
-    // Lower Legs 2 & 3
-    for (int k = 70; k <= 90; k++)
-    {
+    //---------------- Lower Legs 2 & 4 ----------------//
+    for (int k = 110; k >= 90; k--) {
       servoKN2.write(k);
       servoKN4.write(k);
-      delay(30);
+      delay(50);
     }
 
     //---------------- Return Center ----------------//
-    for (int i = 70; i <= 90; i++)
-    {
+    for (int i = 70; i <= 90; i++) {
       servoH1.write(i);
       servoH3.write(i);
 
       servoH2.write(180 - i);
       servoH4.write(180 - i);
 
-      delay(30);
+      delay(50);
     }
   }
-
- 
+  delay(30);
 }
-
-/*****************right turn**********************/
-void Rightmove(){
-    for (int step = 0; step < 5; step++)
-  {
+/*****************right move**********************/
+void Rightmove() {
+  for (int step = 0; step < 5; step++) {
     //---------------- STEP 1 ----------------//
-    for (int i = 70; i <= 110; i++)
-    {
-      servoB1.write(i);
+    for (int i = 70; i <= 110; i++) {
+      servoB1.write(90);
       servoB3.write(i);
-
+      servoKN2.write(i);
       servoB2.write(180 - i);
-      servoB4.write(180 - i);
+      servoB4.write(90);
 
-      delay(80);
+      delay(50);
+    }
+    for (int i = 110; i >= 70; i--) {
+      servoB1.write(90);
+      servoB3.write(i);
+      servoKN2.write(i);
+      servoB2.write(180 - i);
+      servoB4.write(90);
+
+      delay(50);
     }
     delay(40);
   }
-
 }
 
 /************************left move***************/
-void Leftmove(){
-    for (int step = 0; step < 5; step++)
-  {
+void Leftmove() {
+  for (int step = 0; step < 5; step++) {
     //---------------- STEP 1 ----------------//
-    for (int i = 110; i >= 70; i--)
-    {
+    for (int i = 110; i >= 70; i--) {
+      servoB3.write(90);
       servoB1.write(i);
-      servoB3.write(i);
-
-      servoB2.write(180 - i);
+      servoKN4.write(i);
       servoB4.write(180 - i);
+      servoB2.write(90);
+
+      delay(80);
+    }
+    delay(40);
+
+    for (int i = 70; i <= 110; i++) {
+      servoB3.write(90);
+      servoB1.write(i);
+      servoKN1.write(i);
+      servoB4.write(180 - i);
+      servoB2.write(90);
 
       delay(80);
     }
     delay(40);
   }
 }
+/*******************hand shake*****************/
+void Handshake() {
 
+  servoB2.write(120);
+  servoB3.write(60);
+  servoB4.write(90);
 
+  servoH1.write(80);
+  servoH2.write(150);
+  servoH3.write(130);
+  servoH4.write(80);
 
-void setup()
-{
-  Serial.begin(115200);
-const char* wifiSSID = "Telezer_J";
-const char* wifiPASS = "Telezer12";
+  servoKN1.write(90);
+  servoKN3.write(90);
+  servoKN4.write(90);
 
-Serial.print("Connecting to WiFi");
+  for (int i = 0; i < 20; i++) {
 
-WiFi.begin(wifiSSID, wifiPASS);
+    servoB1.write(70);
+    delay(800);
 
-while (WiFi.status() != WL_CONNECTED)
-{
+    servoB1.write(80);
+    delay(800);
+
+    servoKN2.write(40);
+    delay(200);
+
+    servoKN2.write(70);
+    delay(200);
+  }
   delay(500);
-  Serial.print(".");
 }
 
-Serial.println();
-Serial.println("WiFi Connected");
 
-Serial.print("IP Address: ");
-Serial.println(WiFi.localIP());
+void setup() {
+  Serial.begin(115200);
+  const char* wifiSSID = "Telezer_J";
+  const char* wifiPASS = "Telezer12";
 
-server.begin();
+  Serial.print("Connecting to WiFi");
+
+  WiFi.begin(wifiSSID, wifiPASS);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println();
+  Serial.println("WiFi Connected");
+
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+
+  server.begin();
 
   servoH1.attach(servoH1Pin);
   servoH2.attach(servoH2Pin);
@@ -323,15 +360,12 @@ server.begin();
   Serial.println("Quadruped Robot Started");
 
   Stand();
-
 }
 
-void loop()
-{
+void loop() {
   WiFiClient client = server.available();
 
-  if (client)
-  {
+  if (client) {
     String request = client.readStringUntil('\r');
     client.flush();
 
@@ -353,6 +387,12 @@ void loop()
     else if (request.indexOf("GET /sit") >= 0)
       Sit();
 
+    else if (request.indexOf("GET /handshake") >= 0)
+      Handshake();
+
+    else if (request.indexOf("GET /set") >= 0)
+      Set();
+
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/html");
     client.println("Connection: close");
@@ -360,39 +400,207 @@ void loop()
 
     client.println(R"rawliteral(
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quadruped Robot</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Quadruped Robot Control</title>
+
 <style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
 body{
-  font-family:Arial;
-  text-align:center;
-  background:#f2f2f2;
+    background:linear-gradient(135deg,#4facfe,#00f2fe);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
 }
+
+.container{
+
+    width:95%;
+    max-width:500px;
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    box-shadow:0px 10px 30px rgba(0,0,0,.3);
+
+}
+
+h1{
+
+    color:#333;
+    margin-bottom:20px;
+    text-align:center;
+
+}
+
+.grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:15px;
+
+}
+
+a{
+
+    text-decoration:none;
+
+}
+
 button{
-  width:180px;
-  height:70px;
-  font-size:20px;
-  margin:10px;
+
+    width:100%;
+    height:70px;
+
+    border:none;
+
+    border-radius:15px;
+
+    color:white;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.25s;
+
 }
+
+button:hover{
+
+    transform:scale(1.05);
+
+}
+
+button:active{
+
+    transform:scale(.96);
+
+}
+
+/* Button Colors */
+
+.set{background:#607D8B;}
+
+.forward{background:#4CAF50;}
+
+.backward{background:#FF5722;}
+
+.left{background:#2196F3;}
+
+.right{background:#9C27B0;}
+
+.stand{background:#009688;}
+
+.handshake{background:#FFC107;color:#222;}
+
+.sit{background:#E91E63;}
+
+.footer{
+
+    margin-top:20px;
+
+    text-align:center;
+
+    color:#777;
+
+    font-size:15px;
+
+}
+
+@media(max-width:500px){
+
+.grid{
+
+grid-template-columns:1fr;
+
+}
+
+button{
+
+height:65px;
+
+font-size:18px;
+
+}
+
+}
+
 </style>
+
 </head>
+
 <body>
 
-<h2>Quadruped Robot Control</h2>
+<div class="container">
 
-<p><a href="/forward"><button>FORWARD</button></a></p>
-<p><a href="/backward"><button>BACKWARD</button></a></p>
-<p><a href="/left"><button>LEFT</button></a></p>
-<p><a href="/right"><button>RIGHT</button></a></p>
-<p><a href="/stand"><button>STAND</button></a></p>
-<p><a href="/sit"><button>SIT</button></a></p>
+<h1>Quadruped Robot</h1>
+
+<div class="grid">
+
+<a href="/set">
+<button class="set">SET</button>
+</a>
+
+<a href="/stand">
+<button class="stand">STAND</button>
+</a>
+
+<a href="/forward">
+<button class="forward">FORWARD</button>
+</a>
+
+<a href="/backward">
+<button class="backward"> BACKWARD</button>
+</a>
+
+<a href="/left">
+<button class="left">LEFT</button>
+</a>
+
+<a href="/right">
+<button class="right">RIGHT</button>
+</a>
+
+<a href="/handshake">
+<button class="handshake">HAND SHAKE</button>
+</a>
+
+<a href="/sit">
+<button class="sit">SIT</button>
+</a>
+
+</div>
+
+<div class="footer">
+
+ESP8266 / ESP32 Quadruped Robot Controller
+
+</div>
+
+</div>
 
 </body>
 </html>
 )rawliteral");
-
     delay(1);
     client.stop();
   }
