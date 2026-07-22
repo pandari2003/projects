@@ -3,6 +3,8 @@
 
 const char* wifiSSID = "Telezer_J";
 const char* wifiPASS = "Telezer12";
+//
+volatile bool stopMotion = false;
 
 WiFiServer server(80);
 Servo servoB1;
@@ -100,12 +102,47 @@ void Stand() {
 
   delay(50);
 }
+
+
+void checkStop() {
+  WiFiClient client = server.available();
+
+  if (!client)
+    return;
+
+  String request = client.readStringUntil('\r');
+  client.flush();
+
+  if (request.indexOf("GET /set") >= 0) {
+    stopMotion = true;
+
+    client.println("HTTP/1.1 200 OK");
+    client.println("Connection: close");
+    client.println();
+  }
+  client.stop();
+}
+
 /**************** walk Forward ******************/
 void walkForward() {
   // Repeat walking cycle
   for (int step = 0; step < 10; step++) {
+    checkStop();
+
+    if (stopMotion) {
+      Set();
+      stopMotion = false;
+      return;
+    }
     //---------------- STEP 1 ----------------//
     for (int i = 90; i >= 70; i--) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoH1.write(i);
       servoH3.write(i);
       servoH2.write(180 - i);
@@ -116,6 +153,13 @@ void walkForward() {
 
     // Lift Legs 1 & 4
     for (int k = 90; k >= 70; k--) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoKN1.write(k);
       servoKN3.write(k);
       delay(50);
@@ -123,6 +167,13 @@ void walkForward() {
 
     // Lower Legs 1 & 4
     for (int k = 70; k <= 90; k++) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoKN1.write(k);
       servoKN3.write(k);
       delay(50);
@@ -130,6 +181,13 @@ void walkForward() {
 
     //---------------- STEP 2 ----------------//
     for (int i = 70; i <= 110; i++) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoH1.write(i);
       servoH3.write(i);
       servoH2.write(180 - i);
@@ -140,6 +198,13 @@ void walkForward() {
 
     // Lift Legs 2 & 3
     for (int k = 90; k >= 70; k--) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoKN2.write(k);
       servoKN4.write(k);
       delay(50);
@@ -147,6 +212,13 @@ void walkForward() {
 
     // Lower Legs 2 & 3
     for (int k = 70; k <= 90; k++) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoKN2.write(k);
       servoKN4.write(k);
       delay(50);
@@ -154,6 +226,13 @@ void walkForward() {
 
     //---------------- Return Center ----------------//
     for (int i = 110; i >= 90; i--) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoH1.write(i);
       servoH3.write(i);
 
@@ -169,9 +248,23 @@ void walkForward() {
 void walkBackward() {
 
   for (int step = 0; step < 10; step++) {
+    checkStop();
+
+    if (stopMotion) {
+      Set();
+      stopMotion = false;
+      return;
+    }
 
     //---------------- STEP 1 : Shift Hips ----------------//
     for (int i = 90; i <= 110; i++) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoH1.write(i);
       servoH3.write(i);
 
@@ -183,6 +276,13 @@ void walkBackward() {
 
     //---------------- Lift Legs 1 & 3 ----------------//
     for (int k = 90; k <= 110; k++) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoKN1.write(k);
       servoKN3.write(k);
       delay(50);
@@ -190,6 +290,13 @@ void walkBackward() {
 
     //---------------- Lower Legs 1 & 3 ----------------//
     for (int k = 110; k >= 90; k--) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoKN1.write(k);
       servoKN3.write(k);
       delay(50);
@@ -197,6 +304,13 @@ void walkBackward() {
 
     //---------------- STEP 2 : Shift Hips ----------------//
     for (int i = 110; i >= 70; i--) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoH1.write(i);
       servoH3.write(i);
 
@@ -208,6 +322,13 @@ void walkBackward() {
 
     //---------------- Lift Legs 2 & 4 ----------------//
     for (int k = 90; k <= 110; k++) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoKN2.write(k);
       servoKN4.write(k);
       delay(50);
@@ -215,6 +336,13 @@ void walkBackward() {
 
     //---------------- Lower Legs 2 & 4 ----------------//
     for (int k = 110; k >= 90; k--) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoKN2.write(k);
       servoKN4.write(k);
       delay(50);
@@ -222,6 +350,13 @@ void walkBackward() {
 
     //---------------- Return Center ----------------//
     for (int i = 70; i <= 90; i++) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoH1.write(i);
       servoH3.write(i);
 
@@ -236,8 +371,22 @@ void walkBackward() {
 /*****************right move**********************/
 void Rightmove() {
   for (int step = 0; step < 5; step++) {
+    checkStop();
+
+    if (stopMotion) {
+      Set();
+      stopMotion = false;
+      return;
+    }
     //---------------- STEP 1 ----------------//
     for (int i = 70; i <= 110; i++) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoB1.write(90);
       servoB3.write(i);
       servoKN2.write(i);
@@ -247,6 +396,13 @@ void Rightmove() {
       delay(50);
     }
     for (int i = 110; i >= 70; i--) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoB1.write(90);
       servoB3.write(i);
       servoKN2.write(i);
@@ -262,8 +418,22 @@ void Rightmove() {
 /************************left move***************/
 void Leftmove() {
   for (int step = 0; step < 5; step++) {
+    checkStop();
+
+    if (stopMotion) {
+      Set();
+      stopMotion = false;
+      return;
+    }
     //---------------- STEP 1 ----------------//
     for (int i = 110; i >= 70; i--) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoB3.write(90);
       servoB1.write(i);
       servoKN4.write(i);
@@ -275,6 +445,13 @@ void Leftmove() {
     delay(40);
 
     for (int i = 70; i <= 110; i++) {
+      checkStop();
+
+      if (stopMotion) {
+        Set();
+        stopMotion = false;
+        return;
+      }
       servoB3.write(90);
       servoB1.write(i);
       servoKN1.write(i);
@@ -303,6 +480,13 @@ void Handshake() {
   servoKN4.write(90);
 
   for (int i = 0; i < 20; i++) {
+    checkStop();
+
+    if (stopMotion) {
+      Set();
+      stopMotion = false;
+      return;
+    }
 
     servoB1.write(70);
     delay(800);
@@ -390,8 +574,9 @@ void loop() {
     else if (request.indexOf("GET /handshake") >= 0)
       Handshake();
 
-    else if (request.indexOf("GET /set") >= 0)
-      Set();
+    else if (request.indexOf("GET /set") >= 0) {
+      stopMotion = true;
+    }
 
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/html");
