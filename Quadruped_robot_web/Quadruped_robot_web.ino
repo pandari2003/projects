@@ -23,19 +23,20 @@ Servo servoKN3;
 Servo servoKN4;
 
 const int servoB1pin = 2;  //front right (servo 1)
-const int servoB2pin = 3;  //back right (servo 2)
-const int servoB3pin = 4;  //front left (servo 4)
-const int servoB4pin = 5;  //back left (servo 3)
+const int servoB3pin = 5;  //front left (servo 4)
+const int servoB2pin = 8;  //back right (servo 2)
+const int servoB4pin = 11;  //back left (servo 3)
 
-const int servoH1Pin = 6;  // back right (servo 8)
-const int servoH2Pin = 7;  // Front Right (servo 5)
-const int servoH3Pin = 8;  // back Left(servo 7)
-const int servoH4Pin = 9;  // front left (servo 6)
+const int servoH2Pin = 3;  // Front Right (servo 5)
+const int servoH4Pin = 6;  // front left (servo 6)
+const int servoH1Pin = 9;  // back right (servo 8)
+const int servoH3Pin = 12;  // back Left(servo 7)
 
+const int servoKN2Pin = 4;  // Front Right (servo 9)
+const int servoKN4Pin = 7;  // front left (servo 10)
 const int servoKN1Pin = 10;  // back right (servo 12)
-const int servoKN2Pin = 11;  // Front Right (servo 9)
-const int servoKN3Pin = 12;  // back Left (servo 11)
-const int servoKN4Pin = 13;  // front left (servo 10)
+const int servoKN3Pin = 13;  // back Left (servo 11)
+
 
 /**************** SET ALL SERVOS TO 90° ****************/
 void Set() {
@@ -543,7 +544,8 @@ void setup() {
 
   Serial.println("Quadruped Robot Started");
 
-  Stand();
+  //Stand();
+  Set();
 }
 
 void loop() {
