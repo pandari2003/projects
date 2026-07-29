@@ -3,7 +3,7 @@
 
 const char* wifiSSID = "Telezer_J";
 const char* wifiPASS = "Telezer12";
-//
+
 volatile bool stopMotion = false;
 
 WiFiServer server(80);
@@ -22,21 +22,20 @@ Servo servoKN2;
 Servo servoKN3;
 Servo servoKN4;
 
-const int servoB1pin = 2;  //front right (servo 1)
-const int servoB3pin = 5;  //front left (servo 4)
-const int servoB2pin = 8;  //back right (servo 2)
-const int servoB4pin = 11;  //back left (servo 3)
+const int servoB1pin = 2;   //front right
+const int servoB3pin = 5;   //front left
+const int servoB2pin = 8;   //back right
+const int servoB4pin = 11;  //back left
 
-const int servoH2Pin = 3;  // Front Right (servo 5)
-const int servoH4Pin = 6;  // front left (servo 6)
-const int servoH1Pin = 9;  // back right (servo 8)
-const int servoH3Pin = 12;  // back Left(servo 7)
+const int servoH2Pin = 3;   // Front Right
+const int servoH4Pin = 6;   // front left
+const int servoH1Pin = 9;   // back right
+const int servoH3Pin = 12;  // back Left
 
-const int servoKN2Pin = 4;  // Front Right (servo 9)
-const int servoKN4Pin = 7;  // front left (servo 10)
-const int servoKN1Pin = 10;  // back right (servo 12)
-const int servoKN3Pin = 13;  // back Left (servo 11)
-
+const int servoKN2Pin = 4;   // Front Right
+const int servoKN4Pin = 7;   // front left
+const int servoKN1Pin = 10;  // back right
+const int servoKN3Pin = 13;  // back Left
 
 /**************** SET ALL SERVOS TO 90° ****************/
 void Set() {
@@ -102,8 +101,8 @@ void Stand() {
   }
 
   delay(50);
+  Set();
 }
-
 
 void checkStop() {
   WiFiClient client = server.available();
@@ -467,20 +466,19 @@ void Leftmove() {
 /*******************hand shake*****************/
 void Handshake() {
 
-  servoB2.write(120);
-  servoB3.write(60);
+  servoB2.write(90);
+  servoB3.write(90);
   servoB4.write(90);
 
-  servoH1.write(80);
-  servoH2.write(150);
-  servoH3.write(130);
-  servoH4.write(80);
+  servoH1.write(90);
+  servoH3.write(90);
+  servoH4.write(90);
 
   servoKN1.write(90);
   servoKN3.write(90);
   servoKN4.write(90);
 
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 2; i++) {
     checkStop();
 
     if (stopMotion) {
@@ -488,11 +486,11 @@ void Handshake() {
       stopMotion = false;
       return;
     }
-
-    servoB1.write(70);
+    servoH2.write(150);
+    servoB1.write(85);
     delay(800);
 
-    servoB1.write(80);
+    servoB1.write(95);
     delay(800);
 
     servoKN2.write(40);
@@ -500,11 +498,12 @@ void Handshake() {
 
     servoKN2.write(70);
     delay(200);
+    servoH2.write(90);
   }
   delay(500);
+  Set();
 }
-
-
+/*******************setup()****************************/
 void setup() {
   Serial.begin(115200);
   const char* wifiSSID = "Telezer_J";
@@ -544,7 +543,6 @@ void setup() {
 
   Serial.println("Quadruped Robot Started");
 
-  //Stand();
   Set();
 }
 
@@ -779,7 +777,7 @@ font-size:18px;
 
 <div class="footer">
 
-ESP8266 / ESP32 Quadruped Robot Controller
+Quadruped Robot Controller
 
 </div>
 
