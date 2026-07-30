@@ -63,7 +63,7 @@ void Set() {
 
 /****************sit*****************/
 void Sit() {
-  for (int i = 90; i >= 0; i--) {
+  for (int i = 90; i >= 45; i--) {
     // Left pair
     servoH2.write(i);
     servoH3.write(i);
@@ -76,7 +76,7 @@ void Sit() {
     servoKN4.write(265 - i);
     servoKN1.write(265 - i);
     
-    delay(80);  // Same speed as Stand
+    delay(120);  // Same speed as Stand
   }
 
   delay(60);
@@ -84,7 +84,7 @@ void Sit() {
 
 /******************stand robot********************/  //stand
 void Stand() {
-  for (int i = 0; i <= 90; i++) {
+  for (int i = 45; i <= 90; i++) {
     // Left pair
     servoH2.write(i);
     servoH3.write(i);
@@ -97,10 +97,10 @@ void Stand() {
     servoKN1.write(230 - i);
     servoKN4.write(230 - i);
 
-    delay(50);  // Adjust speed here
+    delay(120);  // Adjust speed here
   }
 
-  delay(50);
+  delay(60);
   Set();
 }
 
