@@ -129,8 +129,8 @@ void checkStop() {
   client.stop();
 }
 
-/**************** walk Forward ******************/
-void walkForward() {
+/**************** walk backword******************/
+void walkBackward() {
 
   for (int stp = 0; stp < 20; stp++) {
     checkStop();
@@ -237,8 +237,8 @@ void walkForward() {
     }
   }
 }
-/**************** BACKWARD ****************/
-void walkBackward() {
+/**************** forword ****************/
+void walkForward() {
 
   for (int stp = 0; stp < 20; stp++) {
     checkStop();
@@ -725,12 +725,12 @@ font-size:18px;
 <button class="stand">STAND</button>
 </a>
 
-<a href="/forward">
-<button class="forward">FORWARD</button>
+<a href="/backward">
+<button class="backward">BACKWARD</button>
 </a>
 
-<a href="/backward">
-<button class="backward"> BACKWARD</button>
+<a href="/forward">
+<button class="forward"> FORWARD</button>
 </a>
 
 <a href="/left">
