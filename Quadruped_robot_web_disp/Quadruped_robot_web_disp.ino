@@ -1,5 +1,8 @@
 #include <WiFiS3.h>
 #include <Servo.h>
+#include <ArduinoGraphics.h>
+#include <Arduino_LED_Matrix.h>
+ArduinoLEDMatrix matrix;
 
 const char* wifiSSID = "Telezer_J";
 const char* wifiPASS = "Telezer12";
@@ -7,6 +10,7 @@ const char* wifiPASS = "Telezer12";
 volatile bool stopMotion = false;
 
 WiFiServer server(80);
+String ipString = "";
 
 Servo servoBa1;
 Servo servoBa2;
@@ -38,6 +42,31 @@ const int servoKNa2Pin = 7;   // front left
 const int servoKNa3Pin = 10;  // back right
 const int servoKNa4Pin = 13;  // back Left
 
+/************************************display**************************************/
+void matrix_setup() {
+  matrix.begin();
+
+  matrix.beginDraw();
+  matrix.stroke(0xFFFFFFFF);
+  matrix.textFont(Font_5x7);
+  matrix.textScrollSpeed(50);
+  matrix.endDraw();
+}
+
+
+void displayText(const char* text) {
+  matrix.beginDraw();
+
+  matrix.stroke(0xFFFFFFFF);
+  matrix.textScrollSpeed(50);
+  matrix.textFont(Font_5x7);
+
+  matrix.beginText(0, 1, 0xFFFFFF);
+  matrix.println(text);
+  matrix.endText(SCROLL_LEFT);
+
+  matrix.endDraw();
+}
 
 
 /**************** SET ALL SERVOS TO 90° ****************/
@@ -478,10 +507,11 @@ void Handshake() {
   delay(500);
   Set();
 }
-
 /*******************setup()****************************/
+
 void setup() {
   Serial.begin(115200);
+  matrix_setup();
   const char* wifiSSID = "Telezer_J";
   const char* wifiPASS = "Telezer12";
 
@@ -493,6 +523,9 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+
+  IPAddress ip = WiFi.localIP();
+  ipString = ip.toString();  // Convert IP to text
 
   Serial.println();
   Serial.println("WiFi Connected");
@@ -523,6 +556,8 @@ void setup() {
 }
 
 void loop() {
+  displayText(WiFi.localIP().toString().c_str());
+
   WiFiClient client = server.available();
 
   if (client) {
