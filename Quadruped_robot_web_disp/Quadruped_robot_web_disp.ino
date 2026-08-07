@@ -8,6 +8,10 @@ const char* wifiSSID = "Telezer_J";
 const char* wifiPASS = "Telezer12";
 
 volatile bool stopMotion = false;
+const int microSteps = 20;   // Number of small movement steps
+const int liftAngle  = 20;   // Knee lift angle
+const int swingAngle = 20;   // Hip swing angle
+const int stepDelay  = 15;   // Delay in milliseconds
 
 WiFiServer server(80);
 String ipString = "";
@@ -43,6 +47,7 @@ const int servoKNa3Pin = 10;  // back right
 const int servoKNa4Pin = 13;  // back Left
 
 /************************************display**************************************/
+
 void matrix_setup() {
   matrix.begin();
 
@@ -53,6 +58,7 @@ void matrix_setup() {
   matrix.endDraw();
 }
 
+/***********************display text**********************/
 
 void displayText(const char* text) {
   matrix.beginDraw();
@@ -68,6 +74,25 @@ void displayText(const char* text) {
   matrix.endDraw();
 }
 
+/***************check stop****************/
+void checkStop() {
+  WiFiClient client = server.available();
+
+  if (!client)
+    return;
+
+  String request = client.readStringUntil('\r');
+  client.flush();
+
+  if (request.indexOf("GET /set") >= 0) {
+    stopMotion = true;
+
+    client.println("HTTP/1.1 200 OK");
+    client.println("Connection: close");
+    client.println();
+  }
+  client.stop();
+}
 
 /**************** SET ALL SERVOS TO 90° ****************/
 void Set() {
@@ -94,6 +119,7 @@ void Set() {
 }
 
 /****************sit*****************/
+
 void Sit() {
 
   for (int i = 90; i >= 45; i--) {
@@ -114,7 +140,8 @@ void Sit() {
   }
 }
 
-/******************stand robot********************/  //stand
+/******************stand robot********************/
+
 void Stand() {
 
   for (int i = 45; i <= 90; i++) {
@@ -139,26 +166,8 @@ void Stand() {
   Set();
 }
 
-void checkStop() {
-  WiFiClient client = server.available();
 
-  if (!client)
-    return;
-
-  String request = client.readStringUntil('\r');
-  client.flush();
-
-  if (request.indexOf("GET /set") >= 0) {
-    stopMotion = true;
-
-    client.println("HTTP/1.1 200 OK");
-    client.println("Connection: close");
-    client.println();
-  }
-  client.stop();
-}
-
-/**************** REDUCED ANGLE & ULTRA-SMOOTH WALK FORWARD ******************/
+/**************** WALK FORWARD ******************/
 void walkForward() {
   for (int step = 0; step < 10; step++) {
     
@@ -217,7 +226,7 @@ void walkForward() {
   delay(30);
 }
 
-/**************** REDUCED ANGLE & ULTRA-SMOOTH WALK BACKWARD ****************/
+/**************** WALK BACKWARD ****************/
 void walkBackward() {
   for (int step = 0; step < 10; step++) {
     
@@ -271,7 +280,9 @@ void walkBackward() {
   }
   delay(30);
 }
+
 /*****************right move**********************/
+
 void Rightmove() {
   for (int step = 0; step < 5; step++) {
     checkStop();
@@ -319,6 +330,7 @@ void Rightmove() {
 }
 
 /************************left move***************/
+
 void Leftmove() {
   for (int step = 0; step < 5; step++) {
     checkStop();
@@ -366,20 +378,14 @@ void Leftmove() {
     delay(40);
   }
 }
+
 /*******************hand shake*****************/
+
 void Handshake() {
 
-  servoBa3.write(90);
-  servoBa2.write(90);
-  servoBa4.write(90);
-
-  servoHa3.write(90);
-  servoHa4.write(90);
-  servoHa2.write(90);
-
-  servoKNa3.write(90);
-  servoKNa4.write(90);
-  servoKNa2.write(90);
+  servoBa3.write(90);  servoBa2.write(90);  servoBa4.write(90);
+  servoHa3.write(90);  servoHa4.write(90);  servoHa2.write(90);
+  servoKNa3.write(90);  servoKNa4.write(90);  servoKNa2.write(90);
 
   for (int i = 0; i < 2; i++) {
     checkStop();
@@ -406,6 +412,7 @@ void Handshake() {
   delay(500);
   Set();
 }
+
 /*******************setup()*******************************/
 
 void setup() {
@@ -453,6 +460,8 @@ void setup() {
 
   Set();
 }
+
+/************************loop*************************/
 
 void loop() {
   displayText(WiFi.localIP().toString().c_str());

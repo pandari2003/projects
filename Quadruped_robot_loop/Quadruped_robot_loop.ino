@@ -60,6 +60,7 @@ void Set() {
 }
 
 /****************sit*****************/
+
 void Sit() {
   for (int i = 90; i >= 45; i--) {
     // Left pair
@@ -100,7 +101,7 @@ void Stand() {
   Set();
 }
 
-/**************** REDUCED ANGLE & ULTRA-SMOOTH WALK FORWARD ******************/
+/****************  WALK FORWARD ******************/
 void walkForward() {
   for (int step = 0; step < 10; step++) {
     
@@ -159,7 +160,7 @@ void walkForward() {
   delay(30);
 }
 
-/**************** REDUCED ANGLE & ULTRA-SMOOTH WALK BACKWARD ****************/
+/**************** WALK BACKWARD ****************/
 void walkBackward() {
   for (int step = 0; step < 10; step++) {
     
