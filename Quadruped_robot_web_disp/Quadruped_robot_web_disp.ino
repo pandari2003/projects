@@ -224,6 +224,7 @@ void walkForward() {
     }
   }
   delay(30);
+  Set();
 }
 
 /**************** WALK BACKWARD ****************/
@@ -279,6 +280,7 @@ void walkBackward() {
     }
   }
   delay(30);
+  Set();
 }
 
 /*****************right move**********************/
@@ -327,6 +329,8 @@ void Rightmove() {
     }
     delay(40);
   }
+  delay(30);
+  Set();
 }
 
 /************************left move***************/
@@ -377,6 +381,8 @@ void Leftmove() {
     }
     delay(40);
   }
+  delay(30);
+  Set();
 }
 
 /*******************hand shake*****************/
