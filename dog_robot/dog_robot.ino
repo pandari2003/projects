@@ -1,671 +1,376 @@
-#include <Wire.h>
 #include <WiFiS3.h>
-#include <Adafruit_PWMServoDriver.h>
- 
-// WIFI 
+#include <Servo.h>
 
-char ssid[] = "Telezer_J";
-char pass[] = "Telezer12";
+//---------------- WiFi ----------------//
+char ssid[] = "DogRobot";
+char pass[] = "12345678";
 
 WiFiServer server(80);
 
- 
-// PCA9685 
+//--------------- Servos ---------------//
+Servo hipFL, hipFR, hipBL, hipBR;
+Servo kneeFL, kneeFR, kneeBL, kneeBR;
 
-Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
+//--------------- Pins -----------------//
+// Change these if your wiring is different
+const int HIP_FL_PIN   = 4;
+const int HIP_FR_PIN   = 5;
+const int HIP_BL_PIN   = 6;
+const int HIP_BR_PIN   = 7;
 
- 
-// SERVO SETTINGS 
+const int KNEE_FL_PIN  = 8;
+const int KNEE_FR_PIN  = 9;
+const int KNEE_BL_PIN  = 10;
+const int KNEE_BR_PIN  = 11;
 
-#define SERVO_MIN  110
-#define SERVO_MAX  510
+//------------ Current Position --------//
+int hipFLPos = 90;
+int hipFRPos = 90;
+int hipBLPos = 90;
+int hipBRPos = 90;
 
+int kneeFLPos = 90;
+int kneeFRPos = 90;
+int kneeBLPos = 90;
+int kneeBRPos = 90;
 
-// Servo order:
-//
-// 0 = FL Hip
-// 1 = FL Knee
-// 2 = FR Hip
-// 3 = FR Knee
-// 4 = RL Hip
-// 5 = RL Knee
-// 6 = RR Hip
-// 7 = RR Knee
+// Walking parameters
+// Left legs
+const int HIP_LEFT_FORWARD = 70;
+const int HIP_LEFT_BACK    = 110;
 
- 
-// YOUR STAND POSE 
+// Right legs (mirror)
+const int HIP_RIGHT_FORWARD = 110;
+const int HIP_RIGHT_BACK    = 70;
 
-const int standPose[8] = {
-  50, 50,
-  120, 110,
-  90, 60,
-  80, 98
-};
+const int KNEE_UP   = 60;
+const int KNEE_DOWN = 90;
 
- 
-// SITTING POSE 
-//
-// STARTING VALUES.
-// These may need adjustment. 
+const int STEP_DELAY  = 15;
 
-const int sitPose[8] = {
-  50, 110,
-  120, 50,
-  90, 120,
-  80, 40
-};
-
- 
-// CURRENT POSE 
-
-int currentPose[8] = {
-  50, 50,
-  120, 110,
-  90, 60,
-  80, 98
-};
-
- 
-// ROBOT STATE 
-
-enum RobotState {
-  STAND,
-  SIT,
-  WALK,
-  STOPPED
-};
-
-RobotState robotState = STAND;
-
- 
-// ANGLE TO PCA9685 PULSE 
-
-int angleToPulse(int angle)
+//------------- Smooth Move ------------//
+void moveServo(Servo &servo, int &current, int target)
 {
-  angle = constrain(angle, 0, 180);
-
-  return map(angle, 0, 180, SERVO_MIN, SERVO_MAX);
-}
-
- 
-// MOVE ONE SERVO 
-
-void servoWrite(int servo, int angle)
-{
-  angle = constrain(angle, 0, 180);
-
-  pwm.setPWM(
-    servo,
-    0,
-    angleToPulse(angle)
-  );
-}
-
- 
-// MOVE TO POSE 
-
-void moveToPose(const int targetPose[8])
-{
-  bool moving = true;
-
-  while (moving)
+  if (current < target)
   {
-    moving = false;
-
-    for (int i = 0; i < 8; i++)
+    while (current < target)
     {
-      if (currentPose[i] < targetPose[i])
-      {
-        currentPose[i]++;
-        moving = true;
-      }
-
-      else if (currentPose[i] > targetPose[i])
-      {
-        currentPose[i]--;
-        moving = true;
-      }
-
-      servoWrite(i, currentPose[i]);
+      current++;
+      servo.write(current);
+      delay(15);
     }
-
-    delay(12);
-
-    // Allow STOP button to be processed
-    WiFiClient client = server.available();
-
-    if (client)
+  }
+  else
+  {
+    while (current > target)
     {
-      String request = "";
-
-      unsigned long timeout = millis();
-
-      while (client.connected() &&
-             millis() - timeout < 1000)
-      {
-        if (client.available())
-        {
-          char c = client.read();
-          request += c;
-
-          if (c == '\n')
-            break;
-        }
-      }
-
-      if (request.indexOf("GET /stop") >= 0)
-      {
-        robotState = STOPPED;
-      }
-
-      client.stop();
+      current--;
+      servo.write(current);
+      delay(15);
     }
-
-    if (robotState == STOPPED)
-      break;
   }
 }
 
- 
-// STAND 
-
-void standRobot()
+void moveLeg(
+Servo &hip,
+Servo &knee,
+int &hipPos,
+int &kneePos,
+int hipTarget,
+int kneeTarget)
 {
-  Serial.println("STAND");
-
-  robotState = STAND;
-
-  moveToPose(standPose);
-}
-
- 
-// SIT 
-
-void sitRobot()
-{
-  Serial.println("SIT");
-
-  robotState = SIT;
-
-  moveToPose(sitPose);
-}
-
- 
-// WALK PHASE 1 
-
-void walkPhase1()
-{
-  // FL leg
-  servoWrite(0, 65);
-  servoWrite(1, 30);
-
-  // RR leg
-  servoWrite(6, 65);
-  servoWrite(7, 70);
-
-  delay(250);
-
-  servoWrite(1, 50);
-  servoWrite(7, 98);
-
-  delay(100);
-
-  servoWrite(0, 35);
-  servoWrite(6, 95);
-
-  delay(250);
-}
-
- 
-// WALK PHASE 2 
-
-void walkPhase2()
-{
-  // FR leg
-  servoWrite(2, 105);
-  servoWrite(3, 80);
-
-  // RL leg
-  servoWrite(4, 110);
-  servoWrite(5, 35);
-
-  delay(250);
-
-  servoWrite(3, 110);
-  servoWrite(5, 60);
-
-  delay(100);
-
-  servoWrite(2, 135);
-  servoWrite(4, 70);
-
-  delay(250);
-}
-
- 
-// WALK 
-
-void walkRobot()
-{
-  Serial.println("WALK");
-
-  // Start from stand
-  moveToPose(standPose);
-
-  robotState = WALK;
-
-  while (robotState == WALK)
+  while (hipPos != hipTarget || kneePos != kneeTarget)
   {
-    walkPhase1();
+    if (hipPos < hipTarget) hipPos++;
+    if (hipPos > hipTarget) hipPos--;
 
-    handleWebClient();
+    if (kneePos < kneeTarget) kneePos++;
+    if (kneePos > kneeTarget) kneePos--;
 
-    if (robotState != WALK)
-      break;
+    hip.write(hipPos);
+    knee.write(kneePos);
 
-    walkPhase2();
-
-    handleWebClient();
+    delay(STEP_DELAY);
   }
 }
 
- 
-// WEB PAGE 
+void moveTwoLegs(
+    Servo &hip1, Servo &knee1,
+    int &hipPos1, int &kneePos1,
+    int hipTarget1, int kneeTarget1,
 
-const char webpage[] = R"rawliteral(
-
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1">
-
-<title>Dog Robot</title>
-
-<style>
-
-body
+    Servo &hip2, Servo &knee2,
+    int &hipPos2, int &kneePos2,
+    int hipTarget2, int kneeTarget2)
 {
-  font-family: Arial;
-  text-align: center;
+    while (hipPos1 != hipTarget1 ||
+           kneePos1 != kneeTarget1 ||
+           hipPos2 != hipTarget2 ||
+           kneePos2 != kneeTarget2)
+    {
+        if (hipPos1 < hipTarget1) hipPos1++;
+        if (hipPos1 > hipTarget1) hipPos1--;
 
-  background: #222;
-  color: white;
+        if (kneePos1 < kneeTarget1) kneePos1++;
+        if (kneePos1 > kneeTarget1) kneePos1--;
 
-  margin-top: 40px;
+        if (hipPos2 < hipTarget2) hipPos2++;
+        if (hipPos2 > hipTarget2) hipPos2--;
+
+        if (kneePos2 < kneeTarget2) kneePos2++;
+        if (kneePos2 > kneeTarget2) kneePos2--;
+
+        hip1.write(hipPos1);
+        knee1.write(kneePos1);
+
+        hip2.write(hipPos2);
+        knee2.write(kneePos2);
+
+        delay(STEP_DELAY);
+    }
 }
-
-h1
+void walkCycle()
 {
-  font-size: 32px;
+    //===========================
+    // Phase 1
+    // Front Left + Back Right
+    //===========================
+
+    // Lift both legs
+    moveTwoLegs(
+        hipFL, kneeFL, hipFLPos, kneeFLPos, hipFLPos, KNEE_UP,
+        hipBR, kneeBR, hipBRPos, kneeBRPos, hipBRPos, KNEE_UP);
+
+    // Swing forward
+    moveTwoLegs(
+        hipFL, kneeFL, hipFLPos, kneeFLPos, HIP_LEFT_FORWARD, KNEE_UP,
+        hipBR, kneeBR, hipBRPos, kneeBRPos, HIP_RIGHT_FORWARD, KNEE_UP);
+
+    // Place on ground
+    moveTwoLegs(
+        hipFL, kneeFL, hipFLPos, kneeFLPos, HIP_LEFT_FORWARD, KNEE_DOWN,
+        hipBR, kneeBR, hipBRPos, kneeBRPos, HIP_RIGHT_FORWARD, KNEE_DOWN);
+
+    //===========================
+    // Phase 2
+    // Front Right + Back Left
+    //===========================
+
+    moveTwoLegs(
+        hipFR, kneeFR, hipFRPos, kneeFRPos, hipFRPos, KNEE_UP,
+        hipBL, kneeBL, hipBLPos, kneeBLPos, hipBLPos, KNEE_UP);
+
+    moveTwoLegs(
+        hipFR, kneeFR, hipFRPos, kneeFRPos, HIP_RIGHT_FORWARD, KNEE_UP,
+        hipBL, kneeBL, hipBLPos, kneeBLPos, HIP_LEFT_FORWARD, KNEE_UP);
+
+    moveTwoLegs(
+        hipFR, kneeFR, hipFRPos, kneeFRPos, HIP_RIGHT_FORWARD, KNEE_DOWN,
+        hipBL, kneeBL, hipBLPos, kneeBLPos, HIP_LEFT_FORWARD, KNEE_DOWN);
+
+    //===========================
+    // Return to neutral
+    //===========================
+
+    moveTwoLegs(
+        hipFL, kneeFL, hipFLPos, kneeFLPos, 90, KNEE_DOWN,
+        hipBR, kneeBR, hipBRPos, kneeBRPos, 90, KNEE_DOWN);
+
+    moveTwoLegs(
+        hipFR, kneeFR, hipFRPos, kneeFRPos, 90, KNEE_DOWN,
+        hipBL, kneeBL, hipBLPos, kneeBLPos, 90, KNEE_DOWN);
 }
-
-button
+//------------- Stand Pose -------------//
+void standPose()
 {
-  width: 220px;
-  height: 70px;
-
-  margin: 10px;
-
-  font-size: 24px;
-  font-weight: bold;
-
-  border: none;
-  border-radius: 15px;
-}
-
-.stand
-{
-  background: green;
-  color: white;
-}
-
-.sit
-{
-  background: blue;
-  color: white;
-}
-
-.walk
-{
-  background: orange;
-  color: black;
-}
-
-.stop
-{
-  background: red;
-  color: white;
-}
-
-button:active
-{
-  transform: scale(0.95);
-}
-
-#status
-{
-  margin-top: 30px;
-  font-size: 22px;
-}
-
-</style>
-
-</head>
-
-
-<body>
-
-<h1>🐕 DOG ROBOT</h1>
-
-
-<button
-class="stand"
-onclick="command('/stand')">
-
-STAND
-
-</button>
-
-
-<br>
-
-
-<button
-class="sit"
-onclick="command('/sit')">
-
-SIT
-
-</button>
-
-
-<br>
-
-
-<button
-class="walk"
-onclick="command('/walk')">
-
-WALK
-
-</button>
-
-
-<br>
-
-
-<button
-class="stop"
-onclick="command('/stop')">
-
-STOP
-
-</button>
-
-
-<div id="status">
-
-Status: Ready
-
-</div>
-
-
-<script>
-
-function command(url)
-{
-  fetch(url)
-  .then(response => response.text())
-
-  .then(data =>
+  while (
+    hipFLPos != 90 ||
+    hipFRPos != 90 ||
+    hipBLPos != 90 ||
+    hipBRPos != 90 ||
+    kneeFLPos != 90 ||
+    kneeFRPos != 90 ||
+    kneeBLPos != 90 ||
+    kneeBRPos != 90)
   {
-    document.getElementById("status")
-    .innerHTML = "Status: " + data;
-  });
+
+    if (hipFLPos > 90) hipFLPos--;
+    if (hipFRPos < 90) hipFRPos++;
+    if (hipBLPos > 90) hipBLPos--;
+    if (hipBRPos < 90) hipBRPos++;
+
+    if (kneeFLPos > 90) kneeFLPos--;
+    if (kneeFRPos < 90) kneeFRPos++;
+    if (kneeBLPos > 90) kneeBLPos--;
+    if (kneeBRPos < 90) kneeBRPos++;
+
+    hipFL.write(hipFLPos);
+    hipFR.write(hipFRPos);
+    hipBL.write(hipBLPos);
+    hipBR.write(hipBRPos);
+
+    kneeFL.write(kneeFLPos);
+    kneeFR.write(kneeFRPos);
+    kneeBL.write(kneeBLPos);
+    kneeBR.write(kneeBRPos);
+
+    delay(20);
+  }
 }
 
-</script>
+//-------------- Sit Pose --------------//
+void sitPose()
+{
+  while (
+    hipFLPos != 140 ||
+    hipFRPos != 50 ||
+    hipBLPos != 140 ||
+    hipBRPos != 50 ||
+    kneeFLPos != 140 ||
+    kneeFRPos != 50 ||
+    kneeBLPos != 140 ||
+    kneeBRPos != 50)
+  {
 
+    if (hipFLPos < 140) hipFLPos++;
+    if (hipFRPos > 50) hipFRPos--;
+    if (hipBLPos < 140) hipBLPos++;
+    if (hipBRPos > 50) hipBRPos--;
 
-</body>
+    if (kneeFLPos < 140) kneeFLPos++;
+    if (kneeFRPos > 50) kneeFRPos--;
+    if (kneeBLPos < 140) kneeBLPos++;
+    if (kneeBRPos > 50) kneeBRPos--;
 
-</html>
+    hipFL.write(hipFLPos);
+    hipFR.write(hipFRPos);
+    hipBL.write(hipBLPos);
+    hipBR.write(hipBRPos);
 
-)rawliteral";
+    kneeFL.write(kneeFLPos);
+    kneeFR.write(kneeFRPos);
+    kneeBL.write(kneeBLPos);
+    kneeBR.write(kneeBRPos);
 
- 
-// WEB SERVER 
+    delay(20);
+  }
+}
 
-void handleWebClient()
+void walkForward()
+{
+    // If the robot is sitting, stand up smoothly.
+    standPose();
+
+    // Walk forward.
+    for (int i = 0; i < 5; i++)
+    {
+        walkCycle();
+    }
+
+    // Finish in standing position.
+    standPose();
+}
+
+//------------- Web Page ---------------//
+String page()
+{
+  String html =
+"<!DOCTYPE html>"
+"<html>"
+"<head>"
+"<meta name='viewport' content='width=device-width, initial-scale=1'>"
+"<style>"
+"body{"
+"  text-align:center;"
+"  font-family:Arial;"
+"  background:#f2f2f2;"
+"  margin-top:30px;"
+"}"
+"h2{font-size:32px;}"
+"button{"
+"  width:180px;"
+"  height:70px;"
+"  font-size:24px;"
+"  font-weight:bold;"
+"  margin:8px;"
+"  border:none;"
+"  border-radius:12px;"
+"  cursor:pointer;"
+"}"
+".stand{background:#4CAF50;color:white;}"
+".sit{background:#2196F3;color:white;}"
+".forward{background:#FF9800;color:white;}"
+"</style>"
+"</head>"
+"<body>"
+"<h2>Dog Robot</h2>"
+"<a href='/stand'><button class='stand'>STAND</button></a><br>"
+"<a href='/sit'><button class='sit'>SIT</button></a><br>"
+"<a href='/forward'><button class='forward'>FORWARD</button></a>"
+"</body>"
+"</html>";
+
+  return html;
+}
+
+//--------------- Setup ----------------//
+void setup()
+{
+  hipFL.attach(HIP_FL_PIN);
+  hipFR.attach(HIP_FR_PIN);
+  hipBL.attach(HIP_BL_PIN);
+  hipBR.attach(HIP_BR_PIN);
+
+  kneeFL.attach(KNEE_FL_PIN);
+  kneeFR.attach(KNEE_FR_PIN);
+  kneeBL.attach(KNEE_BL_PIN);
+  kneeBR.attach(KNEE_BR_PIN);
+
+// Start in stand position
+hipFL.write(90);
+hipFR.write(90);
+hipBL.write(90);
+hipBR.write(90);
+
+kneeFL.write(90);
+kneeFR.write(90);
+kneeBL.write(90);
+kneeBR.write(90);
+
+  WiFi.beginAP(ssid, pass);
+
+  Serial.begin(115200);
+  Serial.print("AP IP Address: ");
+  Serial.println(WiFi.localIP());
+
+  server.begin();
+}
+
+//---------------- Loop ----------------//
+void loop()
 {
   WiFiClient client = server.available();
 
-  if (!client)
-    return;
-
-
-  String request = "";
-
-  unsigned long timeout = millis();
-
-
-  while (client.connected() &&
-         millis() - timeout < 1000)
+  if (client)
   {
-    if (client.available())
-    {
-      char c = client.read();
+    String req = client.readStringUntil('\r');
+    client.flush();
 
-      request += c;
+    if (req.indexOf("GET /stand") >= 0)
+      standPose();
 
-      if (c == '\n')
-        break;
-    }
-  }
+    if (req.indexOf("GET /sit") >= 0)
+      sitPose();
 
-
-  // ===================================================
-  // STAND
-  // ===================================================
-
-  if (request.indexOf("GET /stand") >= 0)
-  {
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/plain");
-    client.println();
-    client.println("STANDING");
-
-    client.stop();
-
-    standRobot();
-
-    return;
-  }
-
-
-  // ===================================================
-  // SIT
-  // ===================================================
-
-  if (request.indexOf("GET /sit") >= 0)
-  {
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/plain");
-    client.println();
-    client.println("SITTING");
-
-    client.stop();
-
-    sitRobot();
-
-    return;
-  }
-
-
-  // ===================================================
-  // WALK
-  // ===================================================
-
-  if (request.indexOf("GET /walk") >= 0)
-  {
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/plain");
-    client.println();
-    client.println("WALKING");
-
-    client.stop();
-
-    robotState = WALK;
-
-    return;
-  }
-
-
-  // ===================================================
-  // STOP
-  // ===================================================
-
-  if (request.indexOf("GET /stop") >= 0)
-  {
-    robotState = STOPPED;
+    if(req.indexOf("GET /forward") >= 0)
+    walkForward();
 
     client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/plain");
+    client.println("Content-Type: text/html");
+    client.println("Connection: close");
     client.println();
-    client.println("STOPPED");
+    client.println(page());
 
     client.stop();
-
-    return;
-  }
-
-
-  // ===================================================
-  // WEB PAGE
-  // ===================================================
-
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println("Connection: close");
-  client.println();
-
-  client.print(webpage);
-
-  delay(1);
-
-  client.stop();
-}
-
- 
-// WIFI 
-
-void connectWiFi()
-{
-  Serial.print("Connecting to WiFi");
-
-  WiFi.disconnect();
-  delay(1000);
-
-  int status = WL_IDLE_STATUS;
-
-  while (status != WL_CONNECTED)
-  {
-    status = WiFi.begin(ssid, pass);
-
-    Serial.print(".");
-    
-    delay(5000);
-  }
-
-  Serial.println();
-  Serial.println("WiFi connected!");
-
-  // Wait until DHCP gives us an IP address
-  unsigned long startTime = millis();
-
-  while (WiFi.localIP() == IPAddress(0, 0, 0, 0))
-  {
-    delay(500);
-
-    Serial.print("#");
-
-    if (millis() - startTime > 15000)
-    {
-      Serial.println();
-      Serial.println("DHCP timeout!");
-      break;
-    }
-  }
-
-  Serial.println();
-
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  Serial.print("Signal strength: ");
-  Serial.print(WiFi.RSSI());
-  Serial.println(" dBm");
-
-  server.begin();
-
-  Serial.println("Web server started!");
-}
-
- 
-// SETUP 
-
-void setup()
-{
-  Serial.begin(115200);
-
-  delay(1000);
-
-
-  // PCA9685
-
-  Wire.begin();
-
-  pwm.begin();
-
-  pwm.setOscillatorFrequency(27000000);
-
-  pwm.setPWMFreq(50);
-
-  delay(500);
-
-
-  // Stand position
-
-  for (int i = 0; i < 8; i++)
-  {
-    servoWrite(
-      i,
-      standPose[i]
-    );
-  }
-
-
-  delay(1000);
-
-
-  // WiFi
-
-  connectWiFi();
-}
-
- 
-// LOOP 
-
-void loop()
-{
-  handleWebClient();
-
-  if (robotState == WALK)
-  {
-    walkRobot();
   }
 }
