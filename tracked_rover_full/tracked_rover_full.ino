@@ -18,16 +18,28 @@ const int joystickCDY = A4;
 const int potPin2 = A5;
 
 // Servo pins
-const int servoAY1Pin = 9;
-const int servoBX1Pin = 10;
-const int servoP1Pin = 11;
+const int servoAY1Pin = 4;
+const int servoBX1Pin = 5;
+const int servoP1Pin = 6;
 
-const int servoCY2Pin = 5;
-const int servoDX2Pin = 6;
+const int servoCY2Pin = 8;
+const int servoDX2Pin = 9;
 const int servoP2Pin = 7;
 
 // Control button
 const int controlButton = 2;
+
+// indicator
+const int indicator =3;
+
+// --- DC MOTOR PINS ---
+// Motor 1 (Controlled by Joystick AB X-axis)
+const int motor1_IN1 = 10;
+const int motor1_IN2 = 11;
+
+// Motor 2 (Controlled by Joystick CD X-axis)
+const int motor2_IN3 = 12;
+const int motor2_IN4 = 13;
 
 // Current servo angles
 int ABxAngle = 90;
@@ -39,6 +51,7 @@ int CDyAngle = 90;
 // Joystick settings
 const int center = 512;
 const int deadZone = 50;
+
 
 // -------- JOYSTICK FUNCTION --------
 void controlJoystick(int pin, int &angle) {
@@ -78,6 +91,19 @@ void setup() {
 
   // Button
   pinMode(controlButton, INPUT_PULLUP);
+  pinMode(indicator, INPUT_PULLUP);
+
+  // --- DC MOTOR PIN SETUP ---
+  pinMode(motor1_IN1, OUTPUT);
+  pinMode(motor1_IN2, OUTPUT);
+  pinMode(motor2_IN3, OUTPUT);
+  pinMode(motor2_IN4, OUTPUT);
+
+  // Ensure motors start turned off
+  digitalWrite(motor1_IN1, LOW);
+  digitalWrite(motor1_IN2, LOW);
+  digitalWrite(motor2_IN3, LOW);
+  digitalWrite(motor2_IN4, LOW);
 
   // Serial Monitor
   Serial.begin(115200);
@@ -91,6 +117,12 @@ void loop() {
   // BUTTON ON
 
   if (buttonState == LOW) {
+    digitalWrite(indicator,HIGH);
+    // Stop DC motors immediately when switching to Servo Mode
+    digitalWrite(motor1_IN1, LOW);
+    digitalWrite(motor1_IN2, LOW);
+    digitalWrite(motor2_IN3, LOW);
+    digitalWrite(motor2_IN4, LOW);
 
     // Joystick control
     controlJoystick(joystickABX, ABxAngle);
@@ -146,8 +178,42 @@ void loop() {
   // BUTTON OFF
 
   else {
+    digitalWrite(indicator,LOW);
+    Serial.print("it is in driving mode: ");
 
-    Serial.println("on button");
+    // Read X axis values for both joysticks
+    int abXValue = analogRead(joystickABX);
+    int cdXValue = analogRead(joystickCDX);
+
+    // ---- MOTOR 1 CONTROL (Joystick AB X-Axis) ----
+
+    if (abXValue > center + deadZone) {        // Pushed Forward (+)
+      digitalWrite(motor1_IN1, HIGH);          // Clockwise
+      digitalWrite(motor1_IN2, LOW);
+    } 
+    else if (abXValue < center - deadZone) {   // Pushed Backward (-)
+      digitalWrite(motor1_IN1, LOW);
+      digitalWrite(motor1_IN2, HIGH);         // Anti-Clockwise
+    } 
+    else {                                     // Released / Center
+      digitalWrite(motor1_IN1, LOW);           // OFF
+      digitalWrite(motor1_IN2, LOW);
+    }
+
+    // ---- MOTOR 2 CONTROL (Joystick CD X-Axis) ----
+
+    if (cdXValue > center + deadZone) {        // Pushed Forward (+)
+      digitalWrite(motor2_IN3, HIGH);          // Clockwise
+      digitalWrite(motor2_IN4, LOW);
+    } 
+    else if (cdXValue < center - deadZone) {   // Pushed Backward (-)
+      digitalWrite(motor2_IN3, LOW);
+      digitalWrite(motor2_IN4, HIGH);         // Anti-Clockwise
+    } 
+    else {                                     // Released / Center
+      digitalWrite(motor2_IN3, LOW);           // OFF
+      digitalWrite(motor2_IN4, LOW);
+    }
 
   }
 
