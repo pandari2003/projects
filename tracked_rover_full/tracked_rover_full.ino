@@ -30,7 +30,7 @@ const int servoP2Pin = 7;
 const int controlButton = 2;
 
 // indicator
-const int indicator =3;
+const int indicator = 3;
 
 // --- DC MOTOR PINS ---
 // Motor 1 (Controlled by Joystick AB X-axis)
@@ -48,10 +48,12 @@ int AByAngle = 90;
 int CDxAngle = 90;
 int CDyAngle = 90;
 
+// initial speed dribving mode
+int speedValue = 50;
+
 // Joystick settings
 const int center = 512;
 const int deadZone = 50;
-
 
 // -------- JOYSTICK FUNCTION --------
 void controlJoystick(int pin, int &angle) {
@@ -60,14 +62,12 @@ void controlJoystick(int pin, int &angle) {
 
   if (value > center + deadZone) {
     angle++;
-  }
-  else if (value < center - deadZone) {
+  } else if (value < center - deadZone) {
     angle--;
   }
 
   angle = constrain(angle, 0, 180);
 }
-
 
 void setup() {
 
@@ -78,7 +78,6 @@ void setup() {
   servoCY2.attach(servoCY2Pin);
   servoDX2.attach(servoDX2Pin);
   servoP2.attach(servoP2Pin);
-
 
   // Start servos at 90 degrees
   servoAY1.write(90);
@@ -117,7 +116,7 @@ void loop() {
   // BUTTON ON
 
   if (buttonState == LOW) {
-    digitalWrite(indicator,HIGH);
+    digitalWrite(indicator, HIGH);
     // Stop DC motors immediately when switching to Servo Mode
     digitalWrite(motor1_IN1, LOW);
     digitalWrite(motor1_IN2, LOW);
@@ -131,7 +130,6 @@ void loop() {
     controlJoystick(joystickCDX, CDxAngle);
     controlJoystick(joystickCDY, CDyAngle);
 
-
     // Move joystick servos
     servoAY1.write(ABxAngle);
     servoBX1.write(AByAngle);
@@ -139,21 +137,20 @@ void loop() {
     servoCY2.write(CDxAngle);
     servoDX2.write(CDyAngle);
 
-
     // Potentiometer 1
     int pot1Value = analogRead(potPin1);
     int pot1Angle = map(pot1Value, 0, 1023, 0, 180);
 
     servoP1.write(pot1Angle);
 
-/************************************************/
+    /************************************************/
     // Potentiometer 2
     int pot2Value = analogRead(potPin2);
     int pot2Angle = map(pot2Value, 0, 1023, 0, 180);
 
     servoP2.write(pot2Angle);
 
-/***********************************************/
+    /***********************************************/
     // Serial Monitor
     Serial.print("AB X: ");
     Serial.print(ABxAngle);
@@ -175,47 +172,160 @@ void loop() {
 
   }
 
-  // BUTTON OFF
+  // BUTTON OFF = DRIVING MODE
 
   else {
-    digitalWrite(indicator,LOW);
-    Serial.print("it is in driving mode: ");
+    digitalWrite(indicator, LOW);
 
-    // Read X axis values for both joysticks
+    Serial.print("DRIVING MODE | ");
+    // READ JOYSTICKS
+    // AB joystick X = SPEED
     int abXValue = analogRead(joystickABX);
+
+    // CD joystick X = FORWARD / BACKWARD
     int cdXValue = analogRead(joystickCDX);
 
-    // ---- MOTOR 1 CONTROL (Joystick AB X-Axis) ----
+    // CD joystick Y = LEFT / RIGHT
+    int cdYValue = analogRead(joystickCDY);
 
-    if (abXValue > center + deadZone) {        // Pushed Forward (+)
-      digitalWrite(motor1_IN1, HIGH);          // Clockwise
+    // SPEED CONTROL
+    // Initial value = 50%
+    if (abXValue > center + deadZone) {
+      speedValue++;
+
+    } else if (abXValue < center - deadZone) {
+      speedValue--;
+    }
+
+    // Limit speed from 0 to 100%
+    speedValue = constrain(speedValue, 0, 100);
+
+    // Convert percentage to PWM
+    int baseSpeed = map(speedValue, 0, 100, 0, 255);
+
+    // CD JOYSTICK X = FORWARD / BACKWARD
+    // CD JOYSTICK Y = LEFT / RIGHT
+
+    int leftSpeed = baseSpeed;
+    int rightSpeed = baseSpeed;
+
+    // FORWARD
+    // CD X+
+
+    if (cdXValue > center + deadZone) {
+      // Both motors forward
+
+      leftSpeed = baseSpeed;
+      rightSpeed = baseSpeed;
+
+      // LEFT MOTOR FORWARD
+      analogWrite(motor1_IN1, leftSpeed);
       digitalWrite(motor1_IN2, LOW);
-    } 
-    else if (abXValue < center - deadZone) {   // Pushed Backward (-)
+
+      // RIGHT MOTOR FORWARD
+      analogWrite(motor2_IN3, rightSpeed);
+      digitalWrite(motor2_IN4, LOW);
+
+      Serial.print("FORWARD ");
+    }
+
+    // BACKWARD
+    // CD X-
+
+    else if (cdXValue < center - deadZone) {
+      // Both motors backward
+
+      leftSpeed = baseSpeed;
+      rightSpeed = baseSpeed;
+
+      // LEFT MOTOR BACKWARD
       digitalWrite(motor1_IN1, LOW);
-      digitalWrite(motor1_IN2, HIGH);         // Anti-Clockwise
-    } 
-    else {                                     // Released / Center
-      digitalWrite(motor1_IN1, LOW);           // OFF
-      digitalWrite(motor1_IN2, LOW);
-    }
+      analogWrite(motor1_IN2, leftSpeed);
 
-    // ---- MOTOR 2 CONTROL (Joystick CD X-Axis) ----
-
-    if (cdXValue > center + deadZone) {        // Pushed Forward (+)
-      digitalWrite(motor2_IN3, HIGH);          // Clockwise
-      digitalWrite(motor2_IN4, LOW);
-    } 
-    else if (cdXValue < center - deadZone) {   // Pushed Backward (-)
+      // RIGHT MOTOR BACKWARD
       digitalWrite(motor2_IN3, LOW);
-      digitalWrite(motor2_IN4, HIGH);         // Anti-Clockwise
-    } 
-    else {                                     // Released / Center
-      digitalWrite(motor2_IN3, LOW);           // OFF
-      digitalWrite(motor2_IN4, LOW);
+      analogWrite(motor2_IN4, rightSpeed);
+
+      Serial.print("BACKWARD ");
     }
 
-  }
+    // CD X CENTER
+    else {
+      // No forward/backward movement
+      // RIGHT
+      // CD Y+
 
-  delay(30);
+      if (cdYValue > center + deadZone) {
+        // LEFT motor increases
+        // RIGHT motor decreases
+
+        leftSpeed = baseSpeed + 50;
+        rightSpeed = baseSpeed - 50;
+
+        leftSpeed = constrain(leftSpeed, 0, 255);
+        rightSpeed = constrain(rightSpeed, 0, 255);
+
+        // LEFT MOTOR FORWARD
+        analogWrite(motor1_IN1, leftSpeed);
+        digitalWrite(motor1_IN2, LOW);
+
+        // RIGHT MOTOR FORWARD
+        analogWrite(motor2_IN3, rightSpeed);
+        digitalWrite(motor2_IN4, LOW);
+
+        Serial.print("RIGHT ");
+      }
+
+      // LEFT
+      // CD Y-
+
+      else if (cdYValue < center - deadZone) {
+        // LEFT motor decreases
+        // RIGHT motor increases
+
+        leftSpeed = baseSpeed - 50;
+        rightSpeed = baseSpeed + 50;
+
+        leftSpeed = constrain(leftSpeed, 0, 255);
+        rightSpeed = constrain(rightSpeed, 0, 255);
+
+        // LEFT MOTOR FORWARD
+        analogWrite(motor1_IN1, leftSpeed);
+        digitalWrite(motor1_IN2, LOW);
+
+        // RIGHT MOTOR FORWARD
+        analogWrite(motor2_IN3, rightSpeed);
+        digitalWrite(motor2_IN4, LOW);
+
+        Serial.print("LEFT ");
+      }
+
+      // CD Y CENTER = STOP
+      else {
+        digitalWrite(motor1_IN1, LOW);
+        digitalWrite(motor1_IN2, LOW);
+
+        digitalWrite(motor2_IN3, LOW);
+        digitalWrite(motor2_IN4, LOW);
+
+
+        Serial.print("STOP ");
+      }
+    }
+
+    // SERIAL MONITOR
+
+    Serial.print("Speed: ");
+    Serial.print(speedValue);
+    Serial.print("%");
+
+    Serial.print("  Base PWM: ");
+    Serial.print(baseSpeed);
+
+    Serial.print("  Left PWM: ");
+    Serial.print(leftSpeed);
+
+    Serial.print("  Right PWM: ");
+    Serial.println(rightSpeed);
+  }
 }
