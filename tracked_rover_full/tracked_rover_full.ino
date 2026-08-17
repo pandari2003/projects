@@ -33,11 +33,9 @@ const int controlButton = 2;
 const int indicator = 3;
 
 // --- DC MOTOR PINS ---
-// Motor 1 (Controlled by Joystick AB X-axis)
+// Motor 1 (Controlled by Joystick CD XY-axis)
 const int motor1_IN1 = 10;
 const int motor1_IN2 = 11;
-
-// Motor 2 (Controlled by Joystick CD X-axis)
 const int motor2_IN3 = 12;
 const int motor2_IN4 = 13;
 
@@ -266,9 +264,9 @@ void loop() {
         rightSpeed = constrain(rightSpeed, 0, 255);
 
         // LEFT MOTOR FORWARD
-        analogWrite(motor1_IN1, leftSpeed);
-        digitalWrite(motor1_IN2, LOW);
-
+        digitalWrite(motor1_IN1, LOW);
+        analogWrite(motor1_IN2, leftSpeed);
+        
         // RIGHT MOTOR FORWARD
         analogWrite(motor2_IN3, rightSpeed);
         digitalWrite(motor2_IN4, LOW);
@@ -294,8 +292,8 @@ void loop() {
         digitalWrite(motor1_IN2, LOW);
 
         // RIGHT MOTOR FORWARD
-        analogWrite(motor2_IN3, rightSpeed);
-        digitalWrite(motor2_IN4, LOW);
+        digitalWrite(motor2_IN3, LOW);
+        analogWrite(motor2_IN4, rightSpeed);
 
         Serial.print("LEFT ");
       }
