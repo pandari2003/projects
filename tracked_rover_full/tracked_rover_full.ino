@@ -1,3 +1,51 @@
+/*
+DRV8833	Arduino UNO
+AIN1	D10
+AIN2	D11
+BIN1	D12
+BIN2	D13
+AOUT1	Motor 1
+AOUT2	Motor 1
+BOUT1	Motor 2
+BOUT2	Motor 2
+GND	Arduino GND
+VM	Motor battery +
+
+Servo	Signal	Power
+AY1	D4	External 5–6 V
+BX1	D5	External 5–6 V
+P1	D6	External 5–6 V
+CY2	D8	External 5–6 V
+DX2	D9	External 5–6 V
+P2	D7	External 5–6 V
+button
+Button one side → D2
+Button other side → GND
+
+Joysticks2
+Joystick	Arduino UNO
+AB VRx	A0
+AB VRy	A1
+AB VCC	5V
+AB GND	GND
+Joysticks 2
+CD VRx	A3
+CD VRy	A4
+CD VCC	5V
+CD GND	GND
+
+Potentiometers
+
+Potentiometer	Arduino UNO
+
+Pot 1 center pin	A2
+Pot 1 outer pin	5V
+Pot 1 other outer pin	GND
+
+Pot 2 center pin	A5
+Pot 2 outer pin	5V
+Pot 2 other outer pin	GND
+*/
 #include <Servo.h>
 
 Servo servoAY1;
