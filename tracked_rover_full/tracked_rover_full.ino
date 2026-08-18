@@ -12,22 +12,25 @@ GND	Arduino GND
 VM	Motor battery +
 
 Servo	Signal	Power
+AY11	D3	External 5–6 V
 AY1	D4	External 5–6 V
 BX1	D5	External 5–6 V
 P1	D6	External 5–6 V
 CY2	D8	External 5–6 V
 DX2	D9	External 5–6 V
 P2	D7	External 5–6 V
+
 button
 Button one side → D2
 Button other side → GND
 
-Joysticks2
+Joysticks1
 Joystick	Arduino UNO
 AB VRx	A0
 AB VRy	A1
 AB VCC	5V
 AB GND	GND
+
 Joysticks 2
 CD VRx	A3
 CD VRy	A4
@@ -49,6 +52,7 @@ Pot 2 other outer pin	GND
 #include <Servo.h>
 
 Servo servoAY1;
+Servo servoAY11;
 Servo servoBX1;
 Servo servoP1;
 
@@ -66,6 +70,7 @@ const int joystickCDY = A4;
 const int potPin2 = A5;
 
 // Servo pins
+const int servoAY11Pin = 3;
 const int servoAY1Pin = 4;
 const int servoBX1Pin = 5;
 const int servoP1Pin = 6;
@@ -78,7 +83,7 @@ const int servoP2Pin = 7;
 const int controlButton = 2;
 
 // indicator
-const int indicator = 3;
+//const int indicator = 3;
 
 // --- DC MOTOR PINS ---
 // Motor 1 (Controlled by Joystick CD XY-axis)
@@ -118,6 +123,7 @@ void controlJoystick(int pin, int &angle) {
 void setup() {
 
   servoAY1.attach(servoAY1Pin);
+  servoAY11.attach(servoAY11Pin);
   servoBX1.attach(servoBX1Pin);
   servoP1.attach(servoP1Pin);
 
@@ -127,6 +133,7 @@ void setup() {
 
   // Start servos at 90 degrees
   servoAY1.write(90);
+  servoAY11.write(90);
   servoBX1.write(90);
   servoP1.write(90);
 
@@ -136,7 +143,7 @@ void setup() {
 
   // Button
   pinMode(controlButton, INPUT_PULLUP);
-  pinMode(indicator, INPUT_PULLUP);
+  //pinMode(indicator, INPUT_PULLUP);
 
   // --- DC MOTOR PIN SETUP ---
   pinMode(motor1_IN1, OUTPUT);
@@ -162,7 +169,7 @@ void loop() {
   // BUTTON ON
 
   if (buttonState == LOW) {
-    digitalWrite(indicator, HIGH);
+    //digitalWrite(indicator, HIGH);
     // Stop DC motors immediately when switching to Servo Mode
     digitalWrite(motor1_IN1, LOW);
     digitalWrite(motor1_IN2, LOW);
@@ -178,6 +185,7 @@ void loop() {
 
     // Move joystick servos
     servoAY1.write(ABxAngle);
+    servoAY11.write(ABxAngle);
     servoBX1.write(AByAngle);
 
     servoCY2.write(CDxAngle);
@@ -221,7 +229,7 @@ void loop() {
   // BUTTON OFF = DRIVING MODE
 
   else {
-    digitalWrite(indicator, LOW);
+    //digitalWrite(indicator, LOW);
 
     Serial.print("DRIVING MODE | ");
     // READ JOYSTICKS
@@ -353,7 +361,6 @@ void loop() {
 
         digitalWrite(motor2_IN3, LOW);
         digitalWrite(motor2_IN4, LOW);
-
 
         Serial.print("STOP ");
       }
