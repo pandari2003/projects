@@ -1,9 +1,9 @@
 /*
 DRV8833	Arduino UNO
-AIN1	D10
-AIN2	D11
-BIN1	D12
-BIN2	D13
+AIN1	D6
+AIN2	D7
+BIN1	D8
+BIN2	D9
 AOUT1	Motor 1
 AOUT2	Motor 1
 BOUT1	Motor 2
@@ -12,19 +12,21 @@ GND	Arduino GND
 VM	Motor battery +
 
 Servo	Signal	Power
-AY11	D3	External 5–6 V
-AY1	D4	External 5–6 V
-BX1	D5	External 5–6 V
-P1	D6	External 5–6 V
-CY2	D8	External 5–6 V
-DX2	D9	External 5–6 V
-P2	D7	External 5–6 V
+AY11	D22	External 5–6 V
+AY1	D23	External 5–6 V
+BX1	D24	External 5–6 V
+P1	D25	External 5–6 V
+CY2	D26	External 5–6 V
+DX2	D27	External 5–6 V
+P2	D28	External 5–6 V
 
 button
 Button one side → D2
-Button other side → GND
 
-Joysticks1
+indicator
+led D3
+
+Joysticks 1
 Joystick	Arduino UNO
 AB VRx	A0
 AB VRy	A1
@@ -36,8 +38,6 @@ CD VRx	A3
 CD VRy	A4
 CD VCC	5V
 CD GND	GND
-
-Potentiometers
 
 Potentiometer	Arduino UNO
 
@@ -70,27 +70,27 @@ const int joystickCDY = A4;
 const int potPin2 = A5;
 
 // Servo pins
-const int servoAY11Pin = 3;
-const int servoAY1Pin = 4;
-const int servoBX1Pin = 5;
-const int servoP1Pin = 6;
+const int servoAY11Pin = 22;
+const int servoAY1Pin = 23;
+const int servoBX1Pin = 24;
+const int servoP1Pin = 25;
 
-const int servoCY2Pin = 8;
-const int servoDX2Pin = 9;
-const int servoP2Pin = 7;
+const int servoCY2Pin = 26;
+const int servoDX2Pin = 27;
+const int servoP2Pin = 28;
 
 // Control button
 const int controlButton = 2;
 
 // indicator
-//const int indicator = 3;
+const int indicator = 3;
 
 // --- DC MOTOR PINS ---
 // Motor 1 (Controlled by Joystick CD XY-axis)
-const int motor1_IN1 = 10;
-const int motor1_IN2 = 11;
-const int motor2_IN3 = 12;
-const int motor2_IN4 = 13;
+const int motor1_IN1 = 6;
+const int motor1_IN2 = 7;
+const int motor2_IN3 = 8;
+const int motor2_IN4 = 9;
 
 // Current servo angles
 int ABxAngle = 90;
@@ -185,7 +185,7 @@ void loop() {
 
     // Move joystick servos
     servoAY1.write(ABxAngle);
-    servoAY11.write(ABxAngle);
+    servoAY11.write(180 - ABxAngle);
     servoBX1.write(AByAngle);
 
     servoCY2.write(CDxAngle);
@@ -225,40 +225,48 @@ void loop() {
     Serial.println(pot2Angle);
 
   }
-
+  // ===================================================
   // BUTTON OFF = DRIVING MODE
+  // ===================================================
 
   else {
-    //digitalWrite(indicator, LOW);
+    digitalWrite(indicator, LOW);
 
     Serial.print("DRIVING MODE | ");
+
     // READ JOYSTICKS
+
     // AB joystick X = SPEED
+
     int abXValue = analogRead(joystickABX);
 
     // CD joystick X = FORWARD / BACKWARD
+
     int cdXValue = analogRead(joystickCDX);
 
-    // CD joystick Y = LEFT / RIGHT
+    // CD joystick Y = LEFT / RIGHT ROTATION
+
     int cdYValue = analogRead(joystickCDY);
 
     // SPEED CONTROL
+
     // Initial value = 50%
+
     if (abXValue > center + deadZone) {
       speedValue++;
-
     } else if (abXValue < center - deadZone) {
       speedValue--;
     }
 
     // Limit speed from 0 to 100%
+
     speedValue = constrain(speedValue, 0, 100);
 
     // Convert percentage to PWM
+
     int baseSpeed = map(speedValue, 0, 100, 0, 255);
 
-    // CD JOYSTICK X = FORWARD / BACKWARD
-    // CD JOYSTICK Y = LEFT / RIGHT
+    // MOTOR SPEED VARIABLES
 
     int leftSpeed = baseSpeed;
     int rightSpeed = baseSpeed;
@@ -267,12 +275,14 @@ void loop() {
     // CD X+
 
     if (cdXValue > center + deadZone) {
-      // Both motors forward
+      // Both motors move FORWARD
+      // Same speed
 
       leftSpeed = baseSpeed;
       rightSpeed = baseSpeed;
 
       // LEFT MOTOR FORWARD
+
       analogWrite(motor1_IN1, leftSpeed);
       digitalWrite(motor1_IN2, LOW);
 
@@ -287,71 +297,77 @@ void loop() {
     // CD X-
 
     else if (cdXValue < center - deadZone) {
-      // Both motors backward
+      // Both motors move BACKWARD
+      // Same speed
 
       leftSpeed = baseSpeed;
       rightSpeed = baseSpeed;
 
       // LEFT MOTOR BACKWARD
+
       digitalWrite(motor1_IN1, LOW);
       analogWrite(motor1_IN2, leftSpeed);
 
       // RIGHT MOTOR BACKWARD
+
       digitalWrite(motor2_IN3, LOW);
       analogWrite(motor2_IN4, rightSpeed);
 
       Serial.print("BACKWARD ");
     }
-
     // CD X CENTER
+    // CHECK LEFT / RIGHT ROTATION
+
     else {
-      // No forward/backward movement
-      // RIGHT
+
+      // RIGHT / CLOCKWISE ROTATION
       // CD Y+
 
       if (cdYValue > center + deadZone) {
-        // LEFT motor increases
-        // RIGHT motor decreases
 
-        leftSpeed = baseSpeed + 50;
-        rightSpeed = baseSpeed - 50;
+        // BOTH MOTORS SAME SPEED
+        // BUT OPPOSITE DIRECTIONS
 
-        leftSpeed = constrain(leftSpeed, 0, 255);
-        rightSpeed = constrain(rightSpeed, 0, 255);
+        leftSpeed = baseSpeed;
+        rightSpeed = baseSpeed;
 
-        // LEFT MOTOR FORWARD
-        digitalWrite(motor1_IN1, LOW);
-        analogWrite(motor1_IN2, leftSpeed);
-        
-        // RIGHT MOTOR FORWARD
-        analogWrite(motor2_IN3, rightSpeed);
-        digitalWrite(motor2_IN4, LOW);
+        // LEFT MOTOR = FORWARD
 
-        Serial.print("RIGHT ");
-      }
-
-      // LEFT
-      // CD Y-
-
-      else if (cdYValue < center - deadZone) {
-        // LEFT motor decreases
-        // RIGHT motor increases
-
-        leftSpeed = baseSpeed - 50;
-        rightSpeed = baseSpeed + 50;
-
-        leftSpeed = constrain(leftSpeed, 0, 255);
-        rightSpeed = constrain(rightSpeed, 0, 255);
-
-        // LEFT MOTOR FORWARD
         analogWrite(motor1_IN1, leftSpeed);
         digitalWrite(motor1_IN2, LOW);
 
-        // RIGHT MOTOR FORWARD
+        // RIGHT MOTOR = REVERSE
+
         digitalWrite(motor2_IN3, LOW);
         analogWrite(motor2_IN4, rightSpeed);
 
-        Serial.print("LEFT ");
+        // ROBOT ROTATES CLOCKWISE
+
+        Serial.print("CLOCKWISE ");
+      }
+
+      // LEFT / ANTI-CLOCKWISE ROTATION
+      // CD Y-
+      else if (cdYValue < center - deadZone) {
+
+        // BOTH MOTORS SAME SPEED
+        // BUT OPPOSITE DIRECTIONS
+
+        leftSpeed = baseSpeed;
+        rightSpeed = baseSpeed;
+
+        // LEFT MOTOR = REVERSE
+        digitalWrite(motor1_IN1, LOW);
+        analogWrite(motor1_IN2, leftSpeed);
+
+        // RIGHT MOTOR = FORWARD
+
+        analogWrite(motor2_IN3, rightSpeed);
+        digitalWrite(motor2_IN4, LOW);
+
+        // ROBOT ROTATES ANTI-CLOCKWISE
+
+        Serial.print("ANTI-CLOCKWISE ");
       }
 
       // CD Y CENTER = STOP
