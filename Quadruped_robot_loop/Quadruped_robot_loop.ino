@@ -220,7 +220,7 @@ void Rightmove() {
   for (int step = 0; step < 5; step++) {
  //
     //---------------- STEP 1 ----------------//
-    for (int i = 70; i <= 110; i++) {
+    for (int i = 60; i <= 115; i++) {
    //
       servoBa1.write(90);
       servoBa2.write(i);
@@ -230,7 +230,7 @@ void Rightmove() {
 
       delay(50);
     }
-    for (int i = 110; i >= 70; i--) {
+    for (int i = 115; i >= 60; i--) {
    //
       servoBa1.write(90);
       servoBa2.write(i);
@@ -249,7 +249,7 @@ void Leftmove() {
   for (int step = 0; step < 5; step++) {
  //
     //---------------- STEP 1 ----------------//
-    for (int i = 110; i >= 70; i--) {
+    for (int i = 115; i >= 60; i--) {
    //
       servoBa2.write(90);
       servoBa1.write(i);
@@ -261,7 +261,7 @@ void Leftmove() {
     }
     delay(40);
 
-    for (int i = 70; i <= 110; i++) {
+    for (int i = 60; i <= 115; i++) {
    //
       servoBa2.write(90);
       servoBa1.write(i);
